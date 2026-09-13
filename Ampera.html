@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>ChargeGrid Intelligence</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+body { font-family:'Inter', sans-serif; background:#080d17; color:#e7ecf4; height:100vh; overflow:hidden; }
+.mono { font-family:'JetBrains Mono', monospace; }
+
+#login-screen { display:flex; align-items:center; justify-content:center; height:100vh; background:radial-gradient(circle at 50% 30%, #0e1626 0%, #080d17 70%); }
+#login-box { background:#0e1626; padding:40px; border-radius:16px; width:320px; text-align:center; box-shadow:0 0 0 1px rgba(255,255,255,.05), 0 20px 40px rgba(0,0,0,.4); }
+#login-box h1 { color:#34d399; margin-bottom:20px; letter-spacing:.5px; }
+#login-box input { width:100%; padding:11px; margin:8px 0; border-radius:8px; border:none; background:#0a0f1b; color:#fff; font-family:inherit; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); }
+#login-box button { width:100%; padding:11px; margin-top:12px; background:#34d399; border:none; border-radius:8px; font-weight:600; cursor:pointer; color:#04140d; }
+#login-error { color:#f87171; font-size:13px; margin-top:8px; min-height:16px; }
+
+#app { display:none; height:100vh; }
+#sidebar { width:210px; background:#0b111d; display:flex; flex-direction:column; padding:22px 0; box-shadow:1px 0 0 rgba(255,255,255,.05); }
+#sidebar .logo { display:flex; align-items:center; gap:10px; padding:0 22px 26px 22px; }
+#sidebar .logo-icon { width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,#34d399,#22d3ee); display:flex; align-items:center; justify-content:center; font-size:16px; box-shadow:0 4px 14px rgba(52,211,153,.35); }
+#sidebar .logo-text b { display:block; font-size:15px; font-weight:600; }
+#sidebar .logo-text span { display:block; font-size:9px; color:#64748b; letter-spacing:1.5px; font-family:'JetBrains Mono',monospace; }
+#sidebar button { background:none; border:none; color:#8b96a8; text-align:left; padding:13px 24px; cursor:pointer; font-size:13px; letter-spacing:.5px; font-family:inherit; font-weight:500; border-radius:0 20px 20px 0; margin-right:12px; }
+#sidebar button:hover { background:#141c2c; color:#c7d0dd; }
+#sidebar button.active { background:linear-gradient(90deg,#132a20,#0b111d); color:#34d399; }
+
+#main { flex:1; display:flex; flex-direction:column; }
+#topbar { padding:18px 26px; background:#0b111d; box-shadow:0 1px 0 rgba(255,255,255,.05); display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#8b96a8; font-family:'JetBrains Mono',monospace; }
+#topbar .live { color:#34d399; }
+#topbar .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#34d399; margin-right:6px; box-shadow:0 0 8px #34d399; animation:pulse 1.4s infinite; }
+@keyframes pulse { 0%{opacity:1;} 50%{opacity:.3;} 100%{opacity:1;} }
+#content { flex:1; padding:26px; overflow-y:auto; }
+
+.section-label { font-size:11px; color:#64748b; letter-spacing:2px; text-transform:uppercase; margin-bottom:14px; font-family:'JetBrains Mono',monospace; }
+
+.cards { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+.card { background:linear-gradient(180deg,#101827,#0c131f); border-radius:14px; padding:20px; box-shadow:0 0 0 1px rgba(255,255,255,.04), 0 6px 20px rgba(0,0,0,.25), inset 0 1px 0 rgba(var(--accent-rgb),.5); }
+.card h3 { font-size:11px; color:#7c879c; font-weight:500; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px; font-family:'JetBrains Mono',monospace; }
+.card .value { font-size:27px; color:#f1f5f9; font-weight:600; font-family:'JetBrains Mono',monospace; }
+.card .sub { font-size:11px; color:#7c879c; margin-top:6px; font-family:'JetBrains Mono',monospace; }
+.up { color:#34d399; }
+
+.row2 { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:24px; }
+.row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.panel { background:linear-gradient(180deg,#101827,#0c131f); border-radius:14px; padding:20px; box-shadow:0 0 0 1px rgba(255,255,255,.04), 0 6px 20px rgba(0,0,0,.25); }
+.panel-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; font-size:13px; color:#e7ecf4; font-weight:500; }
+.pilar-tag { font-size:10px; background:#182135; color:#8b96a8; padding:4px 9px; border-radius:6px; letter-spacing:1px; font-family:'JetBrains Mono',monospace; }
+
+.bars { display:flex; gap:24px; margin-top:16px; }
+.bar-block { flex:1; }
+.bar-block .bar-label { display:flex; justify-content:space-between; font-size:11px; color:#8b96a8; margin-bottom:7px; font-family:'JetBrains Mono',monospace; }
+.bar-bg { background:#182135; height:6px; border-radius:6px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:6px; box-shadow:0 0 8px currentColor; }
+
+.status-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; font-size:12.5px; box-shadow:0 1px 0 rgba(255,255,255,.04); font-family:'JetBrains Mono',monospace; }
+.status-row:last-child { box-shadow:none; }
+.status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:9px; box-shadow:0 0 6px currentColor; }
+.on { background:#34d399; color:#34d399; } .off { background:#f87171; color:#f87171; } .idle { background:#38bdf8; color:#38bdf8; }
+.status-txt-on { color:#34d399; } .status-txt-off { color:#f87171; }
+
+.feed-item { background:#141c2c; border-radius:10px; padding:11px 13px; margin-bottom:9px; font-size:12.5px; line-height:1.5; }
+.feed-time { color:#7c879c; font-size:10px; margin-bottom:5px; font-family:'JetBrains Mono',monospace; }
+
+.tarifa-row { margin-bottom:14px; }
+.tarifa-row .bar-label { display:flex; justify-content:space-between; font-size:12px; margin-bottom:7px; font-family:'JetBrains Mono',monospace; }
+.tarifa-row.active .bar-label { color:#fbbf24; font-weight:600; }
+
+.trans-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; box-shadow:0 1px 0 rgba(255,255,255,.04); font-size:12.5px; font-family:'JetBrains Mono',monospace; }
+.trans-row:last-child { box-shadow:none; }
+.trans-row .metodo { color:#7c879c; font-size:10px; }
+.trans-valor { color:#34d399; font-weight:600; }
+
+.ocpp-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; font-size:12.5px; font-family:'JetBrains Mono',monospace; }
+.ocpp-badge { font-size:10px; padding:3px 9px; border-radius:6px; background:#0f2a1c; color:#34d399; }
+.ocpp-badge.standby { background:#2a2410; color:#fbbf24; }
+.compat-circle { width:112px; height:112px; border-radius:50%; border:8px solid #34d399; box-shadow:0 0 24px rgba(52,211,153,.35); display:flex; flex-direction:column; align-items:center; justify-content:center; margin:22px auto 10px auto; }
+.compat-circle b { font-size:22px; font-family:'JetBrains Mono',monospace; } .compat-circle span { font-size:10px; color:#7c879c; }
+
+.section-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.section-title h2 { font-size:13px; letter-spacing:1px; text-transform:uppercase; color:#8b96a8; font-family:'JetBrains Mono',monospace; }
+.add-btn { background:#34d399; border:none; color:#04140d; padding:9px 15px; border-radius:8px; cursor:pointer; font-weight:600; font-family:'Inter',sans-serif; }
+
+.charger-list { display:flex; flex-direction:column; gap:8px; margin-top:24px; }
+.charger-row { background:linear-gradient(180deg,#101827,#0c131f); box-shadow:0 0 0 1px rgba(255,255,255,.04); padding:13px 17px; border-radius:10px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:13px; font-family:'JetBrains Mono',monospace; transition:box-shadow .15s; }
+.charger-row:hover { box-shadow:0 0 0 1px rgba(52,211,153,.4); }
+
+.back-btn { background:#141c2c; border:none; color:#8b96a8; padding:7px 15px; border-radius:8px; cursor:pointer; margin-bottom:16px; font-family:'Inter',sans-serif; }
+
+#modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; backdrop-filter:blur(2px); }
+#modal { background:#0e1626; padding:26px; border-radius:14px; width:300px; box-shadow:0 0 0 1px rgba(255,255,255,.06), 0 20px 40px rgba(0,0,0,.5); }
+#modal h3 { color:#34d399; margin-bottom:16px; font-size:14px; letter-spacing:.5px; font-family:'Inter',sans-serif; font-weight:600; }
+#modal input, #modal select { width:100%; padding:9px; margin:6px 0; border-radius:8px; border:none; background:#0a0f1b; color:#fff; font-family:'Inter',sans-serif; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); }
+#modal .modal-btns { display:flex; gap:8px; margin-top:14px; }
+#modal button { flex:1; padding:9px; border:none; border-radius:8px; cursor:pointer; font-family:'Inter',sans-serif; font-weight:500; }
+#modal .save { background:#34d399; color:#04140d; font-weight:600; }
+#modal .cancel { background:#182135; color:#8b96a8; }
+
+#map-box { width:100%; height:480px; border-radius:14px; overflow:hidden; box-shadow:0 0 0 1px rgba(255,255,255,.04); position:relative; background:#0c131f; }
+#map-box svg { position:absolute; inset:0; width:100%; height:100%; }
+.marker { position:absolute; width:14px; height:14px; border-radius:50%; border:2px solid #fff; transform:translate(-50%,-50%); z-index:2; }
+.marker.on { background:#34d399; box-shadow:0 0 10px #34d399; }
+.marker.off { background:#f87171; box-shadow:0 0 10px #f87171; }
+.marker-label { position:absolute; font-size:11px; color:#e7ecf4; font-family:'JetBrains Mono',monospace; transform:translate(-50%,10px); white-space:nowrap; z-index:2; background:rgba(10,15,27,.65); padding:1px 6px; border-radius:4px; }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div id="login-box">
+    <h1>⚡ ChargeGrid</h1>
+    <input id="login-email" type="text" placeholder="Email">
+    <input id="login-pass" type="password" placeholder="Senha">
+    <button onclick="tentarLogin()">Entrar</button>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text"><b>ChargeGrid</b><span>INTELLIGENCE</span></div>
+    </div>
+    <button id="nav-dashboard" class="active" onclick="mostrarTela('dashboard')">Dashboard</button>
+    <button id="nav-mapa" onclick="mostrarTela('mapa')">Mapa</button>
+  </div>
+  <div id="main">
+    <div id="topbar">
+      <div>Visão geral do sistema</div>
+      <div class="live"><span class="dot"></span>AO VIVO <span id="clock" style="color:#94a3b8"></span></div>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+
+<div id="modal-bg">
+  <div id="modal">
+    <h3>Cadastrar carregador</h3>
+    <input id="f-nome" placeholder="Nome do carregador">
+    <input id="f-potencia" type="number" placeholder="Potência (kW)">
+    <input id="f-faturamento" type="number" placeholder="Faturamento (R$)">
+    <select id="f-status">
+      <option value="1">Ativo (carregando)</option>
+      <option value="0">Offline</option>
+    </select>
+    <div class="modal-btns">
+      <button class="cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="save" onclick="salvarCarregador()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let chargers = [];
+let nextId = 1;
+let telaAtual = 'dashboard';
+let carregadorSelecionado = null;
+let cityMapSVG = null;
+
+let eficiencia = 91;
+let prevPotencia = 0;
+let prevFaturamento = 0;
+let iaFeed = [];
+let transacoes = [];
+
+const iaTemplates = [
+  { icon:'⚠️', txt:(c)=>`Demanda se aproximando do limite. Priorizando ${c}.` },
+  { icon:'📊', txt:(c)=>`Consumo previsto em alta. Redistribuindo carga a partir de ${c}.` },
+  { icon:'💡', txt:()=>`Eficiência energética estável em ${eficiencia}%.` },
+  { icon:'🔗', txt:(c)=>`${c} reconectado via OCPP 2.0.1 após instabilidade.` },
+  { icon:'⚡', txt:(c)=>`${c} limitado pela IA — pico de demanda detectado.` }
+];
+const metodos = ['Pix','Cartão','QR Code','App'];
+
+function horaFmt(){ return new Date().toLocaleTimeString('pt-BR'); }
+
+function getTarifaAtual(){
+  const h = new Date().getHours();
+  if(h>=18 && h<21) return { valor:1.85, tier:'pico', label:'horário de pico' };
+  if(h>=21 || h<6) return { valor:0.95, tier:'offpeak', label:'horário off-peak' };
+  return { valor:1.40, tier:'normal', label:'horário normal' };
+}
+
+setInterval(() => {
+  document.getElementById('clock').innerText = new Date().toLocaleString('pt-BR');
+}, 1000);
+
+function tentarLogin(){
+  const email = document.getElementById('login-email').value;
+  const senha = document.getElementById('login-pass').value;
+  if(email === 'admin123@gmail.com' && senha === '123123'){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    mostrarTela('dashboard');
+  } else {
+    document.getElementById('login-error').innerText = 'Email ou senha incorretos.';
+  }
+}
+
+function mostrarTela(tela){
+  telaAtual = tela;
+  carregadorSelecionado = null;
+  document.getElementById('nav-dashboard').classList.toggle('active', tela==='dashboard');
+  document.getElementById('nav-mapa').classList.toggle('active', tela==='mapa');
+  render();
+}
+
+function render(){
+  if(telaAtual === 'dashboard') renderDashboard();
+  else renderMapa();
+}
+
+function buildChartSVG(history, limiteIA){
+  const w = 600, h = 160;
+  const valores = history.length ? history : [0];
+  const maxVal = Math.max(...valores, limiteIA) * 1.15;
+  const minVal = Math.min(...valores, 0) * 0.9;
+  const range = (maxVal - minVal) || 1;
+  const stepX = w / Math.max(valores.length - 1, 1);
+
+  const pontos = valores.map((v,i) => {
+    const x = i * stepX;
+    const y = h - ((v - minVal) / range) * h;
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+
+  const limiteY = h - ((limiteIA - minVal) / range) * h;
+
+  let ticks = '';
+  for(let i=0;i<=4;i++){
+    const val = minVal + (range * i / 4);
+    const y = h - (i/4)*h;
+    ticks += `<text x="2" y="${y-2}" fill="#64748b" font-size="9">${val.toFixed(0)} kW</text>`;
+  }
+
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none">
+    <line x1="0" y1="${limiteY}" x2="${w}" y2="${limiteY}" stroke="#ef4444" stroke-dasharray="6,4" stroke-width="1"/>
+    <polyline points="${pontos}" fill="none" stroke="#3b82f6" stroke-width="2"/>
+    ${ticks}
+  </svg>`;
+}
+
+function subdivideBlocks(x,y,w,h,depth){
+  if(depth <= 0 || w < 26 || h < 26) return [{x,y,w,h}];
+  const vertical = w >= h;
+  const ratio = 0.32 + Math.random()*0.36;
+  if(vertical){
+    const w1 = w*ratio;
+    return [...subdivideBlocks(x,y,w1,h,depth-1), ...subdivideBlocks(x+w1,y,w-w1,h,depth-1)];
+  } else {
+    const h1 = h*ratio;
+    return [...subdivideBlocks(x,y,w,h1,depth-1), ...subdivideBlocks(x,y+h1,w,h-h1,depth-1)];
+  }
+}
+
+function buildCityMapSVG(){
+  const W = 1000, H = 480;
+  const bg = '#0c131f';
+  const streetMinor = '#1c2738';
+  const streetMajor = '#2c3f59';
+
+  const majorBlocks = subdivideBlocks(0,0,W,H,3);
+  let minorRects = '';
+  let majorRects = '';
+
+  majorBlocks.forEach(mb => {
+    const minorBlocks = subdivideBlocks(mb.x, mb.y, mb.w, mb.h, 3);
+    minorBlocks.forEach(b => {
+      minorRects += `<rect x="${b.x.toFixed(1)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(1)}" height="${b.h.toFixed(1)}" fill="none" stroke="${streetMinor}" stroke-width="1.4"/>`;
+    });
+    majorRects += `<rect x="${mb.x.toFixed(1)}" y="${mb.y.toFixed(1)}" width="${mb.w.toFixed(1)}" height="${mb.h.toFixed(1)}" fill="none" stroke="${streetMajor}" stroke-width="4"/>`;
+  });
+
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <rect width="${W}" height="${H}" fill="${bg}"/>
+    ${minorRects}
+    ${majorRects}
+  </svg>`;
+}
+
+function renderDashboard(){
+  const content = document.getElementById('content');
+  if(carregadorSelecionado !== null){
+    renderCarregadorDetalhe();
+    return;
+  }
+
+  const totalFaturamento = chargers.reduce((s,c)=>s+c.faturamento,0);
+  const totalPotenciaAtual = chargers.reduce((s,c)=>s+c.potenciaAtual,0);
+  const totalPotenciaCap = chargers.reduce((s,c)=>s+c.potencia,0);
+  const ativos = chargers.filter(c=>c.status).length;
+  const limiteIA = totalPotenciaCap * 0.9;
+  const usoCapacidade = totalPotenciaCap ? Math.min(100, (totalPotenciaAtual/totalPotenciaCap)*100) : 0;
+  const tarifa = getTarifaAtual();
+
+  const deltaPot = prevPotencia ? (((totalPotenciaAtual-prevPotencia)/prevPotencia)*100) : 0;
+  const deltaFat = prevFaturamento ? (((totalFaturamento-prevFaturamento)/prevFaturamento)*100) : 0;
+
+  content.innerHTML = `
+    <div class="section-label">Visão geral do sistema</div>
+    <div class="cards">
+      <div class="card" style="--accent-rgb:59,130,246">
+        <h3>Potência total ativa</h3>
+        <div class="value">${totalPotenciaAtual.toFixed(0)} kW</div>
+        <div class="sub">de ${totalPotenciaCap} kW disponíveis ${deltaPot ? `<span class="up">▲${Math.abs(deltaPot).toFixed(0)}%</span>` : ''}</div>
+      </div>
+      <div class="card" style="--accent-rgb:52,211,153">
+        <h3>Carregadores ativos</h3>
+        <div class="value">${ativos} / ${chargers.length}</div>
+        <div class="sub">${chargers.length-ativos} disponíveis para novos veículos</div>
+      </div>
+      <div class="card" style="--accent-rgb:251,191,36">
+        <h3>Receita hoje</h3>
+        <div class="value">R$ ${totalFaturamento.toFixed(0)}</div>
+        <div class="sub">${chargers.length} carregadores ${deltaFat ? `<span class="up">▲${Math.abs(deltaFat).toFixed(0)}%</span>` : ''}</div>
+      </div>
+      <div class="card" style="--accent-rgb:34,211,238">
+        <h3>Tarifa atual (IA)</h3>
+        <div class="value">R$${tarifa.valor.toFixed(2)}</div>
+        <div class="sub">por kWh · ${tarifa.label}</div>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="panel">
+        <div class="panel-title"><span>📈 Controle de demanda — consumo em tempo real</span></div>
+        <div id="chart-holder">${buildChartSVG(chargers.__history || [0], limiteIA)}</div>
+        <div class="bars">
+          <div class="bar-block">
+            <div class="bar-label"><span>Uso da capacidade</span><span>${usoCapacidade.toFixed(0)}%</span></div>
+            <div class="bar-bg"><div class="bar-fill" style="width:${usoCapacidade}%; background:#3b82f6"></div></div>
+          </div>
+          <div class="bar-block">
+            <div class="bar-label"><span>Eficiência energética</span><span>${eficiencia}%</span></div>
+            <div class="bar-bg"><div class="bar-fill" style="width:${eficiencia}%; background:#22c55e"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><span>🔌 Status dos carregadores</span><span class="pilar-tag">${chargers.length} unidades</span></div>
+        ${chargers.length === 0 ? '<div style="color:#64748b; font-size:12px">Nenhum carregador cadastrado.</div>' :
+          chargers.map(c => `
+            <div class="status-row">
+              <span><span class="status-dot ${c.status?'on':'off'}"></span>${c.idLabel} ${c.nome}</span>
+              <span class="${c.status?'status-txt-on':'status-txt-off'}">${c.status ? c.potenciaAtual.toFixed(0)+' kW' : '—'} ${c.status?'Carregando':'Offline'}</span>
+            </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="row3">
+      <div class="panel">
+        <div class="panel-title"><span>🤖 IA — decisões automáticas</span></div>
+        ${iaFeed.length === 0 ? '<div style="color:#64748b; font-size:12px">Aguardando dados dos carregadores.</div>' :
+          iaFeed.map(f => `<div class="feed-item"><div class="feed-time">${f.icon} ${f.time}</div>${f.txt}</div>`).join('')}
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><span>💳 Tarifação e pagamentos</span></div>
+        <div class="tarifa-row ${tarifa.tier==='pico'?'active':''}">
+          <div class="bar-label"><span>Tarifa pico (18h–21h)</span><span>R$ 1,85/kWh</span></div>
+          <div class="bar-bg"><div class="bar-fill" style="width:100%; background:#f59e0b"></div></div>
+        </div>
+        <div class="tarifa-row ${tarifa.tier==='normal'?'active':''}">
+          <div class="bar-label"><span>Tarifa normal</span><span>R$ 1,40/kWh</span></div>
+          <div class="bar-bg"><div class="bar-fill" style="width:76%; background:#3b82f6"></div></div>
+        </div>
+        <div class="tarifa-row ${tarifa.tier==='offpeak'?'active':''}">
+          <div class="bar-label"><span>Tarifa off-peak</span><span>R$ 0,95/kWh</span></div>
+          <div class="bar-bg"><div class="bar-fill" style="width:51%; background:#22c55e"></div></div>
+        </div>
+        <div class="section-label" style="margin-top:14px">Últimas transações</div>
+        ${transacoes.length === 0 ? '<div style="color:#64748b; font-size:12px">Sem transações ainda.</div>' :
+          transacoes.map(t => `
+            <div class="trans-row">
+              <div>${t.idLabel}<br><span class="metodo">${t.kwh.toFixed(1)} kWh · ${t.time}</span></div>
+              <div style="text-align:right"><span class="trans-valor">R$ ${t.valor.toFixed(2)}</span><br><span class="metodo">${t.metodo}</span></div>
+            </div>`).join('')}
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><span>🔗 Interoperabilidade (OCPP)</span></div>
+        <div class="ocpp-row"><span>OCPP 2.0.1</span><span>${chargers.length} dispositivos</span><span class="ocpp-badge">online</span></div>
+        <div class="ocpp-row"><span>ISO 15118</span><span>${Math.floor(chargers.length/2)} dispositivos</span><span class="ocpp-badge">online</span></div>
+        <div class="ocpp-row"><span>OCPI 2.2</span><span>${Math.floor(chargers.length/4)} dispositivos</span><span class="ocpp-badge">online</span></div>
+        <div class="ocpp-row"><span>Modbus TCP</span><span>${chargers.length} dispositivos</span><span class="ocpp-badge standby">standby</span></div>
+        <div class="compat-circle"><b>${chargers.length ? Math.round((ativos/chargers.length)*100) : 0}%</b><span>compatível</span></div>
+        <div style="text-align:center; font-size:11px; color:#64748b">${ativos} de ${chargers.length} carregadores<br>comunicando via OCPP 2.0.1</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:24px"><h2>Carregadores</h2><button class="add-btn" onclick="abrirModal()">+ Cadastrar carregador</button></div>
+    <div class="charger-list">
+      ${chargers.length === 0 ? '<div style="color:#64748b; font-size:13px">Nenhum carregador cadastrado ainda.</div>' :
+        chargers.map(c => `
+          <div class="charger-row" onclick="abrirDetalhe(${c.id})">
+            <div><span class="status-dot ${c.status?'on':'off'}"></span>${c.idLabel} ${c.nome}</div>
+            <div>${c.potenciaAtual.toFixed(0)} kW · R$ ${c.faturamento.toFixed(0)}</div>
+          </div>`).join('')}
+    </div>
+  `;
+}
+
+function renderCarregadorDetalhe(){
+  const c = chargers.find(x=>x.id === carregadorSelecionado);
+  const content = document.getElementById('content');
+  if(!c){ carregadorSelecionado=null; renderDashboard(); return; }
+  content.innerHTML = `
+    <button class="back-btn" onclick="carregadorSelecionado=null; renderDashboard();">← Voltar</button>
+    <div class="cards">
+      <div class="card" style="--accent-rgb:59,130,246"><h3>Potência atual</h3><div class="value">${c.potenciaAtual.toFixed(0)} kW</div><div class="sub">nominal ${c.potencia} kW</div></div>
+      <div class="card" style="--accent-rgb:52,211,153"><h3>Status</h3><div class="value">${c.status ? 'Carregando' : 'Offline'}</div></div>
+      <div class="card" style="--accent-rgb:251,191,36"><h3>Faturamento</h3><div class="value">R$ ${c.faturamento.toFixed(0)}</div></div>
+      <div class="card" style="--accent-rgb:34,211,238"><h3>Identificação</h3><div class="value" style="font-size:16px">${c.idLabel}<br>${c.nome}</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span>📈 Consumo em tempo real — ${c.nome}</span></div>
+      <div>${buildChartSVG(c.history, c.potencia)}</div>
+    </div>
+  `;
+}
+
+function abrirDetalhe(id){
+  carregadorSelecionado = id;
+  render();
+}
+
+function abrirModal(){
+  document.getElementById('modal-bg').style.display = 'flex';
+}
+function fecharModal(){
+  document.getElementById('modal-bg').style.display = 'none';
+  document.getElementById('f-nome').value = '';
+  document.getElementById('f-potencia').value = '';
+  document.getElementById('f-faturamento').value = '';
+}
+
+function salvarCarregador(){
+  const nome = document.getElementById('f-nome').value || 'Carregador ' + nextId;
+  const potencia = parseFloat(document.getElementById('f-potencia').value) || 0;
+  const faturamento = parseFloat(document.getElementById('f-faturamento').value) || 0;
+  const status = document.getElementById('f-status').value === '1';
+
+  chargers.push({
+    id: nextId,
+    idLabel: 'CG-' + String(nextId).padStart(2,'0'),
+    nome, potencia, faturamento, status,
+    potenciaAtual: status ? potencia : 0,
+    history: [status ? potencia : 0],
+    mapX: 8 + Math.random()*84,
+    mapY: 8 + Math.random()*84
+  });
+  nextId++;
+
+  fecharModal();
+  render();
+}
+
+function renderMapa(){
+  const content = document.getElementById('content');
+  if(!cityMapSVG) cityMapSVG = buildCityMapSVG();
+  content.innerHTML = `<div class="section-label">Localização dos carregadores</div>
+    <div id="map-box">${cityMapSVG}</div>`;
+  const box = document.getElementById('map-box');
+  chargers.forEach(c => {
+    const marker = document.createElement('div');
+    marker.className = 'marker ' + (c.status ? 'on' : 'off');
+    marker.style.left = c.mapX + '%';
+    marker.style.top = c.mapY + '%';
+    marker.title = c.nome;
+    box.appendChild(marker);
+
+    const label = document.createElement('div');
+    label.className = 'marker-label';
+    label.style.left = c.mapX + '%';
+    label.style.top = c.mapY + '%';
+    label.innerText = c.nome;
+    box.appendChild(label);
+  });
+}
+
+function atualizarSimulacao(){
+  prevPotencia = chargers.reduce((s,c)=>s+c.potenciaAtual,0);
+  prevFaturamento = chargers.reduce((s,c)=>s+c.faturamento,0);
+
+  chargers.forEach(c => {
+    c.potenciaAtual = c.status ? c.potencia * (0.8 + Math.random()*0.4) : 0;
+    c.history.push(c.potenciaAtual);
+    if(c.history.length > 12) c.history.shift();
+  });
+
+  const totalAtual = chargers.reduce((s,c)=>s+c.potenciaAtual,0);
+  chargers.__history = chargers.__history || [];
+  chargers.__history.push(totalAtual);
+  if(chargers.__history.length > 12) chargers.__history.shift();
+
+  eficiencia = Math.round(Math.max(85, Math.min(95, eficiencia + (Math.random()*4-2))));
+
+  const ativosLista = chargers.filter(c=>c.status);
+  if(ativosLista.length){
+    const tpl = iaTemplates[Math.floor(Math.random()*iaTemplates.length)];
+    const alvo = ativosLista[Math.floor(Math.random()*ativosLista.length)];
+    iaFeed.unshift({ icon: tpl.icon, time: horaFmt(), txt: tpl.txt(alvo.idLabel) });
+    if(iaFeed.length > 4) iaFeed.pop();
+
+    const t = getTarifaAtual();
+    const kwh = 5 + Math.random()*20;
+    transacoes.unshift({
+      idLabel: alvo.idLabel,
+      kwh, valor: kwh * t.valor,
+      time: horaFmt(),
+      metodo: metodos[Math.floor(Math.random()*metodos.length)]
+    });
+    if(transacoes.length > 4) transacoes.pop();
+  }
+
+  if(document.getElementById('app').style.display === 'flex') render();
+}
+
+setInterval(atualizarSimulacao, 7000);
+</script>
+</body>
+</html>
