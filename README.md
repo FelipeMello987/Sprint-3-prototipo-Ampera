@@ -20,6 +20,18 @@ Sistema de monitoramento e gestão de eletropostos — dashboard que reúne, em 
 
 Avançar na implementação técnica da solução, demonstrando a integração dos componentes e apresentando um protótipo funcional que evidencia a sinergia entre energia renovável, automação e as tecnologias escolhidas.
 
+### Como usar o protótipo
+
+1. Acesse o link do protótipo publicado (GitHub Pages).
+2. Na tela de login, use as credenciais:
+   - **Email:** `admin123@gmail.com`
+   - **Senha:** `123123`
+3. Após entrar, use o menu lateral para navegar entre **Dashboard** e **Mapa**.
+4. No Dashboard, clique em **"+ Cadastrar carregador"** e preencha nome, potência (kW), faturamento (R$) e status. Isso preenche automaticamente os cards, o gráfico, a lista de status e o mapa.
+5. Clique em qualquer carregador da lista para abrir o **dashboard individual** daquele equipamento (com o gráfico de consumo isolado).
+6. Na aba **Mapa**, veja a localização de cada carregador cadastrado — verde para disponível/carregando, vermelho para offline.
+7. A cada 7 segundos, a potência dos carregadores varia automaticamente (±20% do valor cadastrado), simulando o funcionamento em tempo real, junto com o feed de decisões da IA e as transações simuladas.
+
 ### Esquema de integração dos componentes
 
 ```
@@ -45,6 +57,13 @@ JavaScript (estado dos dados)
 ### Justificativa técnica das escolhas
 
 O protótipo foi desenvolvido com **HTML5, CSS3 e JavaScript, por ser suficiente para demonstrar toda a lógica de interface e simulação de dados.
+
+### Contribuição das tecnologias para sustentabilidade, automação e eficiência energética
+
+- **Dashboard consolidado (HTML/CSS/JS):** ao reunir consumo, receita e status de todos os carregadores em tempo real, permite que o proprietário identifique rapidamente equipamentos ociosos ou sobrecarregados, favorecendo um uso mais eficiente da energia disponível.
+- **Simulação em tempo real (JavaScript):** a variação automática de potência a cada 7 segundos simula o comportamento real do consumo elétrico, servindo de base para futuras decisões automatizadas de distribuição de carga (balanceamento entre carregadores).
+- **Feed de decisões automáticas (IA simulada):** representa a camada de automação inteligente prevista para a versão final, priorizando veículos, redistribuindo carga entre equipamentos e evitando picos de demanda — reduzindo desperdício de energia.
+- **Painel de tarifação:** ao expor tarifas de pico, normal e off-peak, incentiva o uso consciente da energia em horários mais baratos e menos sobrecarregados, contribuindo para a eficiência da rede como um todo.
 
 ### Resultados e dados funcionais apresentados
 
