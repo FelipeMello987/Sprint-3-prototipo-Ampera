@@ -22,7 +22,7 @@ Avançar na implementação técnica da solução, demonstrando a integração d
 
 ### Como usar o protótipo
 
-1. Acesse o link do protótipo publicado (GitHub Pages).
+1. Acesse o link do protótipo: https://felipemello987.github.io/Sprint-3-prototipo-Ampera/
 2. Na tela de login, use as credenciais:
    - **Email:** `admin123@gmail.com`
    - **Senha:** `123123`
